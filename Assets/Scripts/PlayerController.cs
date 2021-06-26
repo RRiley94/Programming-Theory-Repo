@@ -6,25 +6,26 @@ public class PlayerController : MonoBehaviour
 {
     private bool isOnGround = true;
     public float jumpForce;
-    protected Rigidbody playerRb;
-    public GameObject powerupPrefab;
+    private Rigidbody playerRb;
+    [SerializeField] GameObject powerupPrefab;
     public bool hasPowerup = false;
     private float spawnRange = 20;
     public float speed;
     private const float turnSpeed = 240.0f;
     protected float zBound = 24;
     protected float xBound = 24;
-    private GameObject focalPoint;
+    protected Animator m_Animator;
+
     // Start is called before the first frame update
     void Start()
     {//code to pull player rigidbody for jump force
         playerRb = GetComponent<Rigidbody>();
-        focalPoint = GameObject.Find("Focal Point");
         Instantiate(powerupPrefab, GenerateSpawnPosition(), powerupPrefab.transform.rotation);
+        m_Animator = gameObject.GetComponentInChildren<Animator>();
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
 
         float forwardInput = Input.GetAxis("Vertical");
@@ -33,17 +34,28 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space) && isOnGround)
         {//code to make player jump
             playerRb.AddRelativeForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            m_Animator.SetBool("Jump_b", true);
             isOnGround = false;
+        }
+        else if (isOnGround == true)
+        {
+            m_Animator.SetBool("Jump_b", false);
         }
         //code for basic player movement with main camera attached using prototype 1 followplayer script.
         if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D))
         {
             playerRb.AddRelativeForce(Vector3.forward * forwardInput * speed, ForceMode.Impulse);
+            m_Animator.SetFloat("Speed_f", playerRb.velocity.magnitude);
             playerRb.transform.Rotate(Vector3.up, Time.deltaTime * turnSpeed * horizontalInput);
         }
         else
         {
-            playerRb.velocity = Vector3.zero;
+            if (isOnGround)
+            {
+                playerRb.velocity = Vector3.zero;
+                m_Animator.SetFloat("Speed_f", 0);
+            }
+            
         }
         //wall boundaries for player
         WallBoundary();
@@ -64,14 +76,21 @@ public class PlayerController : MonoBehaviour
             isOnGround = true;
         }
 
-        if (collision.gameObject.CompareTag("Enemy") && hasPowerup)
+        if (collision.gameObject.CompareTag("Enemy") && !hasPowerup)
         {
-            Destroy(collision.gameObject);
-        } else if (collision.gameObject.CompareTag("Enemy") && !hasPowerup)
-        {
-            Destroy(gameObject);
+            m_Animator.SetBool("Death_b", true);
+            playerRb.constraints = RigidbodyConstraints.FreezeAll;
+            StartCoroutine(DespawnPlayerSequence());
+            
         }
     }
+
+    IEnumerator DespawnPlayerSequence()
+    {
+        yield return new WaitForSeconds(5);
+        Destroy(gameObject);
+    }
+
     IEnumerator PowerupCountdown()
     {
         yield return new WaitForSeconds(10);
@@ -97,7 +116,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    protected void WallBoundary()
+    public void WallBoundary()
     {
         if (transform.position.z > zBound)
         {
