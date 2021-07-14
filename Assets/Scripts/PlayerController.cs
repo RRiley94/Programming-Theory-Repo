@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : GameManager
 {
     private bool isOnGround = true;
     public float jumpForce;
@@ -12,8 +12,6 @@ public class PlayerController : MonoBehaviour
     private float spawnRange = 20;
     public float speed;
     private const float turnSpeed = 240.0f;
-    protected float zBound = 24;
-    protected float xBound = 24;
     protected Animator m_Animator;
 
     // Start is called before the first frame update
@@ -57,7 +55,7 @@ public class PlayerController : MonoBehaviour
             }
             
         }
-        //wall boundaries for player
+        //inherits from game manager script
         WallBoundary();
     }
 
@@ -113,26 +111,6 @@ public class PlayerController : MonoBehaviour
         if (other.gameObject.CompareTag("Enemy") && hasPowerup)
         {
             Destroy(other.gameObject);
-        }
-    }
-
-    public void WallBoundary()
-    {
-        if (transform.position.z > zBound)
-        {
-            transform.position = new Vector3(transform.position.x, transform.position.y, zBound);
-        }
-        else if (transform.position.z < -zBound)
-        {
-            transform.position = new Vector3(transform.position.x, transform.position.y, -zBound);
-        }
-        if (transform.position.x > xBound)
-        {
-            transform.position = new Vector3(xBound, transform.position.y, transform.position.z);
-        }
-        else if (transform.position.x < -xBound)
-        {
-            transform.position = new Vector3(-xBound, transform.position.y, transform.position.z);
         }
     }
 }

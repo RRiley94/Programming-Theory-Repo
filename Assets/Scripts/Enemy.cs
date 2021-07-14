@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour
+public class Enemy : GameManager
 {
     public float speed;
     public float zBound = 24;
@@ -20,14 +20,15 @@ public class Enemy : MonoBehaviour
         enemy_Animator = gameObject.GetComponentInChildren<Animator>();
         enemy_Animator.SetBool("Attack", false);
     }
-
+    public override void WallBoundary()
+    {
+        ZBound = 40;
+        XBound = 40;
+    }
     // Update is called once per frame
     void Update()
     {
-        Vector3 lookDirection = (player.transform.position - transform.position).normalized;
-        enemyRb.velocity = (lookDirection * speed);
-        transform.LookAt(player.transform, Vector3.up);
-        enemy_Animator.SetFloat("MoveSpeed", enemyRb.velocity.magnitude);
+        MoveTowardsPlayer();
 
         hasPowerup = player.GetComponent<PlayerController>().hasPowerup;
 
@@ -39,29 +40,11 @@ public class Enemy : MonoBehaviour
         {
             enemy_Animator.SetBool("Attack", false);
         }
-
-        
-        if (transform.position.z > zBound)
-        {
-            transform.position = new Vector3(transform.position.x, transform.position.y, zBound);
-        }
-        else if (transform.position.z < -zBound)
-        {
-            transform.position = new Vector3(transform.position.x, transform.position.y, -zBound);
-        }
-        if (transform.position.x > xBound)
-        {
-            transform.position = new Vector3(xBound, transform.position.y, transform.position.z);
-        }
-        else if (transform.position.x < -xBound)
-        {
-            transform.position = new Vector3(-xBound, transform.position.y, transform.position.z);
-        }
-        
+        WallBoundary();
     }
 
     private void OnCollisionEnter(Collision collision)
-    {//code to allow player to jump once on the ground
+    {
         if (collision.gameObject.CompareTag("Player") && hasPowerup == true)
         {
             enemy_Animator.SetBool("Dead", true);
@@ -75,5 +58,12 @@ public class Enemy : MonoBehaviour
     {
         yield return new WaitForSeconds(5);
         Destroy(gameObject);
+    }
+    void MoveTowardsPlayer()
+    {
+        Vector3 lookDirection = (player.transform.position - transform.position).normalized;
+        enemyRb.velocity = (lookDirection * speed);
+        transform.LookAt(player.transform, Vector3.up);
+        enemy_Animator.SetFloat("MoveSpeed", enemyRb.velocity.magnitude);
     }
 }
